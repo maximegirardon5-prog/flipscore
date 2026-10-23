@@ -91,7 +91,7 @@ def test_invalid_condition_is_rejected(db):
 
 def test_alert_is_never_duplicated(db):
     listing = _listing()
-    search = m.SavedSearch(name="iPhone", query="iphone 13")
+    search = m.SavedSearch(code="iphone", name="iPhone", query="iphone 13")
     db.add_all([listing, search])
     db.flush()
     db.add(m.Alert(saved_search_id=search.id, listing_id=listing.id))

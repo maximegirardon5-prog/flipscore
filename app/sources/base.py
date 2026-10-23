@@ -26,7 +26,7 @@ import json
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from datetime import datetime
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
@@ -44,7 +44,9 @@ class SearchQuery(BaseModel):
     max_price_cents: int | None = Field(default=None, ge=0)
     postal_code: str | None = None
     radius_km: float | None = Field(default=None, ge=0)
-    limit: int = Field(default=50, ge=1, le=200)
+    conditions: list[str] = Field(default_factory=list)  # états standards acceptés
+    local_pickup_only: bool = False
+    limit: int = Field(default=50, ge=1, le=10000)  # nombre maximum d'annonces au total
 
 
 class ManualInput(BaseModel):
@@ -71,6 +73,9 @@ class ListingDraft(BaseModel):
     currency: str = Field(default="EUR", min_length=3, max_length=3)
     description: str | None = None
     shipping_cents: int | None = Field(default=None, ge=0)
+    # État standardisé, si le connecteur le connaît avec certitude (ex. codes d'état eBay).
+    # Sinon, la normalisation le déduit de `condition_raw`.
+    condition: Literal["new", "like_new", "good", "fair", "for_parts", "unknown"] | None = None
     condition_raw: str | None = None
     photos: list[str] = Field(default_factory=list)
     location_city: str | None = None

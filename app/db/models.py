@@ -38,6 +38,7 @@ ALERT_STATUSES = ("pending", "sent", "failed")
 ALERT_FEEDBACK = ("interested", "bought", "ignored", "bad_alert")
 INVENTORY_STATUSES = ("bought", "in_repair", "listed", "reserved", "sold", "returned", "lost")
 JOB_STATUSES = ("running", "success", "error")
+SEARCH_RUN_STATUSES = ("running", "success", "error", "blocked", "skipped")
 
 
 def _in(column: str, values: tuple[str, ...]) -> str:
@@ -126,6 +127,9 @@ class Listing(IdMixin, TimestampMixin, Base):
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # Dernière vérification du statut auprès de la source, et date de fin (vendue, retirée…)
+    status_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     raw_listing_id: Mapped[int | None] = _fk("raw_listings.id")
 
     product: Mapped["Product | None"] = relationship(back_populates="listings")
@@ -313,20 +317,92 @@ class ScoreCriterion(IdMixin, Base):
 
 
 class SavedSearch(IdMixin, TimestampMixin, Base):
+    """Recherche enregistrée. Source de vérité : config/searches.yaml (synchronisé ici)."""
+
     __tablename__ = "saved_searches"
 
+    code: Mapped[str] = mapped_column(String(100), unique=True)
     name: Mapped[str] = mapped_column(String(120))
     query: Mapped[str] = mapped_column(Text)
-    platforms: Mapped[list] = mapped_column(JsonType, default=list)
+    connectors: Mapped[list] = mapped_column(JsonType, default=list)
     category_code: Mapped[str | None] = mapped_column(
         ForeignKey("categories.code", ondelete="SET NULL")
     )
-    filters: Mapped[dict] = mapped_column(JsonType, default=dict)
+    min_price_cents: Mapped[int | None] = mapped_column(Integer)
+    max_price_cents: Mapped[int | None] = mapped_column(Integer)
+    conditions: Mapped[list] = mapped_column(JsonType, default=list)
+    local_pickup_only: Mapped[bool] = mapped_column(Boolean, default=False)
+    postal_code: Mapped[str | None] = mapped_column(String(10))
+    radius_km: Mapped[float | None] = mapped_column(Float)
+    interval_minutes: Mapped[int] = mapped_column(Integer, default=60)
+    filters: Mapped[dict] = mapped_column(JsonType, default=dict)  # filtres additionnels
     min_score: Mapped[int | None] = mapped_column(SmallInteger)
     min_margin_cents: Mapped[int | None] = mapped_column(Integer)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     notify: Mapped[bool] = mapped_column(Boolean, default=True)
     last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_success_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    next_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ListingSearch(Base):
+    """Lien annonce <-> recherche : quelles recherches ont trouvé quelle annonce, et quand.
+
+    Sert à détecter les annonces disparues (plus revues par la recherche qui les trouvait).
+    """
+
+    __tablename__ = "listing_searches"
+    __table_args__ = (
+        Index("ix_listing_searches_search_last", "saved_search_id", "last_matched_at"),
+    )
+
+    listing_id: Mapped[int] = mapped_column(
+        IdType, ForeignKey("listings.id", ondelete="CASCADE"), primary_key=True
+    )
+    saved_search_id: Mapped[int] = mapped_column(
+        IdType, ForeignKey("saved_searches.id", ondelete="CASCADE"), primary_key=True
+    )
+    first_matched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    last_matched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class SearchRun(IdMixin, Base):
+    """Une exécution d'une recherche sur une source : le journal lisible de la collecte."""
+
+    __tablename__ = "search_runs"
+    __table_args__ = (
+        CheckConstraint(_in("status", SEARCH_RUN_STATUSES), name="status"),
+        Index("ix_search_runs_started", "started_at"),
+        Index("ix_search_runs_connector_started", "connector", "started_at"),
+    )
+
+    job_run_id: Mapped[int | None] = _fk("job_runs.id")
+    saved_search_id: Mapped[int | None] = _fk("saved_searches.id")
+    connector: Mapped[str] = mapped_column(String(50))
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(String(20), default="running")
+    found: Mapped[int] = mapped_column(Integer, default=0)
+    new_count: Mapped[int] = mapped_column(Integer, default=0)
+    price_changes: Mapped[int] = mapped_column(Integer, default=0)
+    disappeared: Mapped[int] = mapped_column(Integer, default=0)
+    api_calls: Mapped[int] = mapped_column(Integer, default=0)
+    error: Mapped[str | None] = mapped_column(Text)
+
+
+class SourceState(TimestampMixin, Base):
+    """État de santé et quota de chaque source (une ligne par connecteur)."""
+
+    __tablename__ = "source_states"
+
+    connector: Mapped[str] = mapped_column(String(50), primary_key=True)
+    consecutive_failures: Mapped[int] = mapped_column(Integer, default=0)
+    paused_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_error: Mapped[str | None] = mapped_column(Text)
+    last_success_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Quota : nombre d'appels consommés le jour `calls_day` (remis à zéro chaque jour, UTC).
+    calls_day: Mapped[str | None] = mapped_column(String(10))
+    calls_today: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class Alert(IdMixin, TimestampMixin, Base):

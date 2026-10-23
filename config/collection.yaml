@@ -1,0 +1,29 @@
+# Réglages de la collecte des annonces.
+
+# Fréquence par défaut d'une recherche (minutes). Minimum 60 : la tâche planifiée tourne
+# toutes les heures pour rester dans les 2 000 minutes gratuites de GitHub Actions.
+default_interval_minutes: 60
+
+# Les données brutes (payload) sont effacées après ce délai (RGPD, place en base).
+raw_payload_retention_days: 90
+
+ebay:
+  marketplace_id: EBAY_FR
+  item_location_country: FR     # annonces situées en France
+  daily_call_budget: 4000       # eBay autorise ~5 000 appels/jour : on garde une marge
+  page_size: 100                # annonces par appel (max 200)
+  max_pages_per_search: 3       # au plus 300 annonces par recherche et par passage
+  buying_options: []            # vide = tous ; ex. [FIXED_PRICE, BEST_OFFER] pour exclure les enchères
+
+disappearance:
+  # Une annonce eBay non revue depuis ce délai est vérifiée auprès d'eBay (vendue ? retirée ?)
+  check_after_hours: 24
+  max_checks_per_run: 20
+  # Leboncoin / Vinted : impossible de vérifier. L'annonce passe en « expirée » après ce délai.
+  expire_unverifiable_after_days: 14
+
+circuit_breaker:
+  # Après N échecs de suite, une source est mise en pause (pause doublée à chaque échec).
+  failures_before_pause: 3
+  base_pause_minutes: 60
+  max_pause_hours: 24

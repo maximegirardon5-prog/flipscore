@@ -1,0 +1,45 @@
+# Recherches enregistrées : la collecte les lance automatiquement.
+#
+# Champs :
+#   code              identifiant stable (minuscules, chiffres, _). Ne pas le changer ensuite.
+#   name              nom lisible
+#   keywords          mots-clés de recherche
+#   category          catégorie (nom d'un fichier de config/categories/), optionnel
+#   connectors        sources à interroger : ebay_api
+#   max_price_eur     budget maximum en euros (optionnel)
+#   min_price_eur     prix minimum en euros (optionnel, utile pour écarter les accessoires)
+#   conditions        états acceptés : new, like_new, good, fair, for_parts (vide = tous)
+#   interval_minutes  fréquence (60 minimum ; vide = valeur de collection.yaml)
+#   local_pickup_only true = uniquement remise en main propre autour de postal_code
+#   postal_code       code postal (vide = home_postal_code de defaults.yaml)
+#   radius_km         rayon en km (vide = max_distance_km de defaults.yaml)
+#   active            false pour mettre une recherche en pause
+#
+# Les recherches Leboncoin et Vinted ne sont PAS ici : elles se créent sur leurs sites,
+# avec une alerte e-mail vers la boîte Gmail dédiée.
+
+searches:
+  - code: iphone_13
+    name: iPhone 13
+    keywords: iphone 13
+    category: smartphone
+    connectors: [ebay_api]
+    min_price_eur: 120
+    max_price_eur: 350
+
+  - code: velo_gravel
+    name: Vélo gravel
+    keywords: vélo gravel
+    category: velo
+    connectors: [ebay_api]
+    min_price_eur: 200
+    max_price_eur: 800
+    interval_minutes: 180
+
+  - code: veste_barbour
+    name: Veste Barbour
+    keywords: veste barbour
+    category: vetement_marque
+    connectors: [ebay_api]
+    max_price_eur: 80
+    interval_minutes: 180

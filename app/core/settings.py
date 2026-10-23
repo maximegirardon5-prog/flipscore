@@ -33,6 +33,12 @@ class Settings(BaseSettings):
 
     ebay_client_id: str | None = None
     ebay_client_secret: SecretStr | None = None
+    # "production" pour les vraies annonces, "sandbox" pour l'environnement de test d'eBay.
+    ebay_env: Literal["production", "sandbox"] = "production"
+
+    # Sel secret utilisé pour pseudonymiser les identifiants vendeurs (hachage).
+    # À définir une fois en production, puis à ne plus changer.
+    pseudonymization_salt: SecretStr = SecretStr("dev-salt-a-changer")
 
     gmail_address: str | None = None
     gmail_app_password: SecretStr | None = None

@@ -65,3 +65,35 @@ def test_new_category_needs_only_a_yaml_file(config_copy):
         "attributes:\n  model: { type: text, required: true, price_relevant: true }\n"
     )
     assert "console" in load_business_config(config_copy).categories
+
+
+def test_searches_and_collection_are_loaded():
+    cfg = load_business_config("config")
+    assert {s.code for s in cfg.searches} >= {"iphone_13", "velo_gravel", "veste_barbour"}
+    assert cfg.collection.default_interval_minutes >= 60
+    assert cfg.collection.ebay.daily_call_budget <= 5000
+
+
+def test_searches_use_known_connectors():
+    from app.sources.registry import discover_connectors
+
+    connectors = set(discover_connectors())
+    for search in load_business_config("config").searches:
+        assert set(search.connectors) <= connectors, search.code
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "message"),
+    [
+        ("code: velo_gravel", "code: iphone_13", "en double"),
+        ("category: velo\n", "category: trottinette\n", "catégorie inconnue"),
+        ("interval_minutes: 180", "interval_minutes: 5", "interval_minutes"),
+        ("max_price_eur: 800", "max_price_eur: 800\n    local_pickup_only: true", "code postal"),
+        ("min_price_eur: 200", "min_price_eur: 900", "min_price_eur"),
+    ],
+)
+def test_invalid_searches_are_rejected(config_copy, old, new, message):
+    path = config_copy / "searches.yaml"
+    path.write_text(path.read_text().replace(old, new, 1))
+    with pytest.raises(ConfigError, match=message):
+        load_business_config(config_copy)

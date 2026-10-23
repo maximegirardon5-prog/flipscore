@@ -9,6 +9,8 @@ Structure :
     config/scoring.yaml        pondérations par défaut, seuils de confiance et d'alerte
     config/platforms.yaml      frais par plateforme
     config/defaults.yaml       réglages personnels par défaut (surchargés par la table `settings`)
+    config/collection.yaml     réglages de la collecte (fréquences, quotas, pannes, expiration)
+    config/searches.yaml       recherches enregistrées (mots-clés, catégorie, zone, budget)
     config/categories/*.yaml   un fichier par catégorie (= un plugin de catégorie)
 
 Ordre de priorité des réglages : table `settings` > YAML de la catégorie > YAML par défaut.
@@ -26,6 +28,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 from app.core.errors import ConfigError
 
 CRITERIA = ("margin", "reliability", "liquidity", "risk", "effort", "capital")
+CONDITIONS = ("new", "like_new", "good", "fair", "for_parts", "unknown")
 
 
 class _Strict(BaseModel):
@@ -156,10 +159,78 @@ class CategoryProfile(_Strict):
     risk_keywords: list[str] = Field(default_factory=list)
     counterfeit_risk: Literal["low", "medium", "high"] = "low"
     weights: PartialWeights | None = None
+    # Catégories eBay (identifiants « feuilles ») pour affiner les recherches eBay. Optionnel.
+    ebay_category_ids: list[str] = Field(default_factory=list)
 
     @property
     def price_relevant_attributes(self) -> list[str]:
         return sorted(k for k, spec in self.attributes.items() if spec.price_relevant)
+
+
+# --- Collecte ------------------------------------------------------------------------------
+
+
+class EbayCollection(_Strict):
+    marketplace_id: str = Field(pattern=r"^EBAY_[A-Z]{2}$")
+    item_location_country: str = Field(pattern=r"^[A-Z]{2}$")
+    daily_call_budget: int = Field(ge=1, le=5000, description="Plafond d'appels par jour")
+    page_size: int = Field(ge=1, le=200)
+    max_pages_per_search: int = Field(ge=1, le=50)
+    buying_options: list[Literal["FIXED_PRICE", "AUCTION", "BEST_OFFER", "CLASSIFIED_AD"]] = Field(
+        default_factory=list
+    )
+
+
+class Disappearance(_Strict):
+    check_after_hours: int = Field(ge=1)
+    max_checks_per_run: int = Field(ge=0)
+    expire_unverifiable_after_days: int = Field(ge=1)
+
+
+class CircuitBreaker(_Strict):
+    failures_before_pause: int = Field(ge=1)
+    base_pause_minutes: int = Field(ge=1)
+    max_pause_hours: int = Field(ge=1)
+
+
+class CollectionConfig(_Strict):
+    default_interval_minutes: int = Field(ge=60)
+    raw_payload_retention_days: int = Field(ge=1)
+    ebay: EbayCollection
+    disappearance: Disappearance
+    circuit_breaker: CircuitBreaker
+
+
+class SearchSpec(_Strict):
+    """Une recherche enregistrée (config/searches.yaml)."""
+
+    code: str = Field(pattern=r"^[a-z0-9_]+$", description="Identifiant stable, ne pas changer")
+    name: str
+    keywords: str = Field(min_length=2)
+    category: str | None = None
+    connectors: list[str] = Field(min_length=1)
+    max_price_eur: float | None = Field(default=None, ge=0)
+    min_price_eur: float | None = Field(default=None, ge=0)
+    conditions: list[Literal[CONDITIONS]] = Field(default_factory=list)  # type: ignore[valid-type]
+    interval_minutes: int | None = Field(default=None, ge=60)
+    local_pickup_only: bool = False
+    postal_code: str | None = Field(default=None, pattern=r"^\d{5}$")
+    radius_km: float | None = Field(default=None, gt=0, le=500)
+    active: bool = True
+
+    @model_validator(mode="after")
+    def _price_range(self) -> "SearchSpec":
+        if (
+            self.min_price_eur is not None
+            and self.max_price_eur is not None
+            and self.min_price_eur > self.max_price_eur
+        ):
+            raise ValueError("min_price_eur doit être inférieur à max_price_eur")
+        return self
+
+
+class SearchesFile(_Strict):
+    searches: list[SearchSpec] = Field(default_factory=list)
 
 
 # --- Ensemble ------------------------------------------------------------------------------
@@ -170,6 +241,8 @@ class BusinessConfig(BaseModel):
     platforms: dict[str, Platform]
     defaults: PersonalDefaults
     categories: dict[str, CategoryProfile]
+    collection: CollectionConfig
+    searches: list[SearchSpec]
 
     def weights_for(self, category_code: str | None) -> dict[str, float]:
         """Poids effectifs (normalisés) pour une catégorie : défaut + surcharge catégorie."""
@@ -239,8 +312,34 @@ def load_business_config(config_dir: str | Path = "config") -> BusinessConfig:
                     f"Catégorie '{profile.code}' : plateforme de revente inconnue '{p}'"
                 )
 
+    collection = _validate(
+        CollectionConfig, _read_yaml(root / "collection.yaml"), root / "collection.yaml"
+    )
+    searches_file = _validate(
+        SearchesFile, _read_yaml(root / "searches.yaml"), root / "searches.yaml"
+    )
+    seen_codes: set[str] = set()
+    for search in searches_file.searches:
+        if search.code in seen_codes:
+            raise ConfigError(f"searches.yaml : code de recherche en double '{search.code}'")
+        seen_codes.add(search.code)
+        if search.category and search.category not in categories:
+            raise ConfigError(
+                f"searches.yaml : recherche '{search.code}', catégorie inconnue '{search.category}'"
+            )
+        if search.local_pickup_only and not (search.postal_code or defaults.home_postal_code):
+            raise ConfigError(
+                f"searches.yaml : recherche '{search.code}' en main propre sans code postal "
+                "(renseigne postal_code ici ou home_postal_code dans defaults.yaml)"
+            )
+
     return BusinessConfig(
-        scoring=scoring, platforms=platforms, defaults=defaults, categories=categories
+        scoring=scoring,
+        platforms=platforms,
+        defaults=defaults,
+        categories=categories,
+        collection=collection,
+        searches=searches_file.searches,
     )
 
 

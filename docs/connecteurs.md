@@ -53,7 +53,7 @@ générique (état standardisé, vendeur pseudonymisé, distance, dédoublonnage
 | Code | Plateforme | Mode | Phase |
 |---|---|---|---|
 | `demo` | — | données fictives (tests) | 1 ✅ |
-| `ebay_api` | eBay | API officielle Browse | 2 |
+| `ebay_api` | eBay | API officielle Browse | 2 ✅ (en sommeil sans clés) |
 | `email_alert` | Leboncoin, Vinted | lecture des e-mails d'alerte de la boîte Gmail dédiée | 2 |
 | `manual_text` | toutes | texte collé dans Telegram ou sur le site | 2 |
 | `screenshot` | toutes | capture d'écran analysée par l'IA | IA |

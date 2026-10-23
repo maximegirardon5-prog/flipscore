@@ -6,6 +6,7 @@ Trois niveaux, chacun pour une raison précise.
 |---|---|---|
 | Secrets (clés API, mots de passe, jeton Telegram) | Variables d'environnement : `.env` en local, Vercel et GitHub Secrets en production | toi, une fois |
 | Réglages métier par défaut (poids, frais, catégories) | `config/*.yaml`, versionnés dans Git | toi, sur le site GitHub |
+| Recherches enregistrées et réglages de collecte | `config/searches.yaml`, `config/collection.yaml` | toi, sur le site GitHub |
 | Réglages personnels du quotidien (ville, rayon, seuils) | Table `settings` | toi, depuis l'interface (phase interface) |
 
 **Priorité** : table `settings` > YAML de la catégorie > YAML par défaut.
@@ -43,3 +44,17 @@ tu changes les poids, les anciens scores restent explicables.
 `price_relevant: true` signifie que l'attribut fait varier le prix : deux annonces ne sont
 comparées que si ces attributs sont identiques (un iPhone 128 Go n'est pas comparé à un
 512 Go).
+
+## Recherches enregistrées (`config/searches.yaml`)
+
+Chaque recherche indique ses mots-clés, sa catégorie, ses sources (`connectors`), son budget
+(`min_price_eur`, `max_price_eur`), les états acceptés, sa fréquence (`interval_minutes`,
+60 minimum) et éventuellement une zone (`local_pickup_only`, `postal_code`, `radius_km`).
+Le fichier est commenté champ par champ. Une recherche retirée du fichier est désactivée
+(son historique est conservé). Ne change pas le `code` d'une recherche existante.
+
+## Collecte (`config/collection.yaml`)
+
+Fréquence par défaut, durée de conservation des données brutes, quota eBay, pagination,
+règles de détection des annonces disparues et du disjoncteur (mise en pause d'une source en
+panne). Voir [collecte.md](collecte.md).

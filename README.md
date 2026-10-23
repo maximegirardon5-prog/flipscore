@@ -3,9 +3,9 @@
 Application qui note les annonces de petites annonces et de marketplaces (eBay, Leboncoin,
 Vinted…) avec un **score d'opportunité de 0 à 100**, explicable, pour l'achat-revente.
 
-> **État : phase 1 (fondations).** Architecture, modèle de données, configuration et
-> squelette sont en place. La collecte, l'estimation, le score et les alertes arrivent dans
-> les phases suivantes.
+> **État : phase 2 (collecte) en cours.** Fondations en place ; moteur de collecte,
+> normalisation et connecteur eBay prêts (eBay en sommeil tant que les clés ne sont pas
+> saisies). L'estimation, le score et les alertes arrivent dans les phases suivantes.
 
 ---
 
@@ -22,7 +22,7 @@ Tout se passe dans ton navigateur, sur PC, Mac ou tablette, grâce à **GitHub C
    ```bash
    ./run.sh test
    ```
-   Tu dois voir `35 passed` (ou plus) : tout fonctionne.
+   Tu dois voir `80 passed` (ou plus) : tout fonctionne.
 4. Pour voir l'application :
    ```bash
    ./run.sh dev
@@ -56,7 +56,8 @@ Sous Windows, utilise **WSL** ou Git Bash (le script `run.sh` est un script bash
 | `./run.sh test` | Lance tous les tests |
 | `./run.sh dev` | Démarre l'application (http://localhost:8000, doc de l'API sur `/docs`) |
 | `./run.sh initdb` | Crée ou met à jour les tables de la base |
-| `./run.sh job heartbeat` | Lance une tâche planifiée à la main |
+| `./run.sh job collect` | Lance une collecte des annonces à la main |
+| `./run.sh job heartbeat` | Vérifie que la base et la configuration fonctionnent |
 | `./run.sh check` | Vérifie la qualité du code |
 
 ## Modifier les réglages, sans toucher au code
@@ -70,6 +71,8 @@ Tous les réglages métier sont dans le dossier [`config/`](config/) et sont mod
 | `config/scoring.yaml` | Poids des 6 critères du score, seuils de confiance et d'alerte |
 | `config/platforms.yaml` | Frais de chaque plateforme |
 | `config/defaults.yaml` | Tes réglages par défaut (rayon, coût au km, valeur de ton heure…) |
+| `config/searches.yaml` | Tes recherches enregistrées (mots-clés, catégorie, budget, zone, fréquence) |
+| `config/collection.yaml` | Réglages de la collecte (quotas, pannes, expiration) |
 | `config/categories/*.yaml` | Un fichier par catégorie (attributs, frais, risques, poids) |
 
 À chaque modification, GitHub relance les tests automatiquement (onglet **Actions**) :
@@ -87,7 +90,8 @@ flipscore/
 │   ├── core/               réglages, secrets, journaux, erreurs, lecture des YAML
 │   ├── db/                 modèle de données (tables) et accès à la base
 │   ├── sources/            connecteurs de sources : 1 fichier = 1 plateforme (plugins)
-│   ├── normalization/      mise au format unique des annonces          (phase 2)
+│   ├── collection/         orchestration de la collecte (quotas, pannes, planification)
+│   ├── normalization/      mise au format unique des annonces
 │   ├── products/           identification du produit                    (phase 3)
 │   ├── estimation/         estimation du prix de revente                (phase 4)
 │   ├── scoring/            calcul du score explicable                   (phase 5)
@@ -118,6 +122,8 @@ Actions* sur GitHub.
 - [Architecture et choix techniques](docs/architecture.md)
 - [Modèle de données](docs/modele-de-donnees.md)
 - [Contrat des connecteurs](docs/connecteurs.md)
+- [Collecte des annonces](docs/collecte.md)
+- [Guide : activer eBay](docs/guide-ebay.md)
 - [Configuration](docs/configuration.md)
 - [Risques juridiques, techniques et de coûts](docs/risques.md)
 

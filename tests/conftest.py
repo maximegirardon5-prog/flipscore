@@ -1,11 +1,17 @@
-"""Préparation commune des tests : base SQLite temporaire, migrée avec Alembic."""
+"""Préparation commune des tests : base temporaire, migrée avec Alembic.
 
+Par défaut : SQLite (rien à installer). Si TEST_DATABASE_URL est défini (CI), les tests
+tournent sur PostgreSQL, comme en production : la base est vidée avant chaque test.
+"""
+
+import os
 import shutil
 from pathlib import Path
 
 import pytest
 from alembic import command
 from alembic.config import Config
+from sqlalchemy import text
 
 from app.core.business_config import get_business_config
 from app.core.settings import get_settings
@@ -25,9 +31,13 @@ def test_env(tmp_path, monkeypatch):
     """Chaque test a sa propre base vide : aucun test ne dépend d'un autre."""
     monkeypatch.chdir(ROOT)
     monkeypatch.setenv("APP_ENV", "test")
-    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path / 'test.db'}")
+    pg_url = os.environ.get("TEST_DATABASE_URL")
+    monkeypatch.setenv("DATABASE_URL", pg_url or f"sqlite:///{tmp_path / 'test.db'}")
     monkeypatch.setenv("CONFIG_DIR", str(ROOT / "config"))
     _clear_caches()
+    if pg_url:
+        with get_engine().begin() as conn:
+            conn.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
     command.upgrade(Config(str(ROOT / "alembic.ini")), "head")
     yield
     get_engine().dispose()
