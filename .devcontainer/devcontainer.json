@@ -1,0 +1,14 @@
+{
+  "name": "FlipScore",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "postCreateCommand": "./run.sh setup",
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": { "label": "FlipScore", "onAutoForward": "openPreview" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "charliermarsh.ruff", "redhat.vscode-yaml"]
+    }
+  }
+}

@@ -1,0 +1,26 @@
+[project]
+name = "flipscore"
+version = "0.1.0"
+description = "Notation d'opportunités d'achat-revente sur petites annonces"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["."]
+filterwarnings = ["ignore::DeprecationWarning:fastapi.testclient", "ignore:Using `httpx`"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# Fichiers de migration générés automatiquement : lignes longues tolérées.
+"alembic/versions/*" = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+known-third-party = ["alembic"]

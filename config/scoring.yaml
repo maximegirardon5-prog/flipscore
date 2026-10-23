@@ -1,0 +1,25 @@
+# Réglages du score d'opportunité (0-100).
+# Modifiable sans toucher au code. Les tests vérifient ce fichier avant mise en ligne.
+
+engine_version: "0.0.0-squelette"   # le vrai moteur arrive dans une phase suivante
+
+# Poids des 6 critères. Pas besoin que la somme fasse 1 : ils sont renormalisés.
+# Un poids plus élevé = le critère compte davantage dans le score final.
+weights:
+  margin: 0.35        # marge nette estimée (après tous les frais)
+  reliability: 0.15   # fiabilité de l'estimation (nombre et qualité des comparables)
+  liquidity: 0.15     # rapidité de revente probable
+  risk: 0.20          # arnaque, contrefaçon, état incertain, vendeur douteux
+  effort: 0.10        # distance, stockage, réparation, temps de gestion
+  capital: 0.05       # rendement de l'argent immobilisé (ROI, rotation)
+
+# Seuils de confiance (0 à 1) pour afficher "faible / moyenne / élevée"
+confidence:
+  low_below: 0.4
+  high_from: 0.7
+
+# Valeurs par défaut des recherches enregistrées (surchargées recherche par recherche)
+alerts:
+  min_score: 70
+  min_margin_cents: 2000     # 20 €
+  min_confidence: 0.4

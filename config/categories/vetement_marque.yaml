@@ -1,0 +1,22 @@
+code: vetement_marque
+name: Vêtements de marque
+keywords: [veste, manteau, pull, jean, sneakers, sac, "made in"]
+
+attributes:
+  size:     { type: text, required: true, price_relevant: true, label: "Taille" }
+  gender:   { type: choice, price_relevant: true, choices: [homme, femme, enfant, mixte], label: "Genre" }
+  material: { type: text, label: "Matière" }
+  line:     { type: text, price_relevant: true, label: "Ligne / collection" }
+  has_tags: { type: bool, label: "Étiquettes présentes" }
+
+resale_platforms: [vinted, ebay, leboncoin]
+typical_shipping_cents: 500
+packaging_cents: 100
+repair_reserve_pct: 3          # nettoyage, petite couture
+typical_days_to_sell: 14
+storage_volume: small
+counterfeit_risk: high
+risk_keywords: [réplique, "qualité 1:1", "sans étiquette", inspiré, "style de", copie]
+
+weights:
+  risk: 0.25                   # contrefaçons fréquentes

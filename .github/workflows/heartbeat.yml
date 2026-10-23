@@ -1,0 +1,36 @@
+# Tâche planifiée : vérifie chaque jour que la base et la configuration fonctionnent.
+# Effet secondaire utile : empêche la mise en pause de la base Supabase gratuite.
+# Ne fait rien tant que le secret DATABASE_URL n'est pas configuré dans GitHub.
+name: Heartbeat
+
+on:
+  schedule:
+    - cron: "17 6 * * *"   # tous les jours vers 6h17 UTC
+  workflow_dispatch:         # bouton "Run workflow" pour lancer à la main
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      APP_ENV: production
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Vérifier la configuration
+        id: guard
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "Secret DATABASE_URL absent : tâche ignorée (normal avant le déploiement)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.guard.outputs.skip != 'true'
+      - uses: actions/setup-python@v5
+        if: steps.guard.outputs.skip != 'true'
+        with:
+          python-version: "3.12"
+          cache: pip
+      - if: steps.guard.outputs.skip != 'true'
+        run: pip install -r requirements.txt
+      - if: steps.guard.outputs.skip != 'true'
+        run: python -m app.jobs.heartbeat

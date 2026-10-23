@@ -1,0 +1,13 @@
+# Secrets : ne JAMAIS publier le fichier .env
+.env
+# Environnement Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+# Base locale de développement
+*.db
+*.sqlite3
+# Vercel
+.vercel/

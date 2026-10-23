@@ -1,0 +1,23 @@
+# Lance automatiquement le contrôle qualité et les tests à chaque modification.
+# Résultat visible sur GitHub : coche verte ✅ = tout va bien, croix rouge ❌ = problème.
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Qualité du code
+        run: ruff check .
+      - name: Tests
+        run: pytest

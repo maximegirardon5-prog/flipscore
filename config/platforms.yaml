@@ -1,0 +1,31 @@
+# Frais par plateforme.
+# ⚠️ VALEURS INDICATIVES À VÉRIFIER sur les grilles officielles avant la phase scoring :
+# les plateformes changent régulièrement leurs frais. En cas de doute, on surestime les
+# frais (prudence = on ne surestime jamais la marge).
+
+ebay:
+  name: eBay
+  access_mode: [api]
+  fees:
+    seller_fee_pct: 11.0          # valeur prudente : vérifier la grille "particuliers" eBay.fr
+    seller_fixed_fee_cents: 35
+    buyer_fee_pct: 0
+  notes: "API officielle Browse. Prix vendus via Marketplace Insights (accès restreint)."
+
+vinted:
+  name: Vinted
+  access_mode: [manual, email, extension]
+  fees:
+    seller_fee_pct: 0             # vendeur particulier : gratuit en France
+    buyer_fee_pct: 5.0            # protection acheteur (pourcentage + fixe), payée à l'achat
+    buyer_fixed_fee_cents: 70
+  notes: "Pas d'API publique. Collecte automatisée interdite par les CGU : mode semi-manuel."
+
+leboncoin:
+  name: Leboncoin
+  access_mode: [manual, email, extension]
+  fees:
+    seller_fee_pct: 0             # particulier, remise en main propre ou envoi : gratuit vendeur
+    buyer_fee_pct: 4.0            # frais de protection si paiement en ligne (à vérifier)
+    buyer_fixed_fee_cents: 79
+  notes: "Pas d'API publique. Collecte automatisée interdite par les CGU : mode semi-manuel."

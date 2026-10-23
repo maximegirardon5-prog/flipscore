@@ -1,0 +1,27 @@
+# Plugin de catégorie : smartphones.
+# Ajouter une catégorie = copier ce fichier, le renommer (nom = code) et l'adapter.
+
+code: smartphone
+name: Smartphones
+keywords: [iphone, samsung galaxy, pixel, xiaomi, smartphone, téléphone]
+
+# Attributs propres à la catégorie. price_relevant = l'attribut fait varier le prix
+# (deux annonces ne sont comparées que si ces attributs sont identiques).
+attributes:
+  storage_gb:     { type: int, required: true, price_relevant: true, min: 1, max: 4096, label: "Stockage (Go)" }
+  battery_health: { type: int, min: 0, max: 100, label: "Santé batterie (%)" }
+  carrier_locked: { type: bool, price_relevant: true, label: "Bloqué opérateur" }
+  color:          { type: text, label: "Couleur" }
+  has_box:        { type: bool, label: "Boîte d'origine" }
+
+resale_platforms: [ebay, leboncoin, vinted]
+typical_shipping_cents: 600
+packaging_cents: 200
+repair_reserve_pct: 5          # réserve pour petite réparation (écran, batterie)
+typical_days_to_sell: 7
+storage_volume: small
+counterfeit_risk: medium
+risk_keywords: [icloud, "compte google", bloqué, blacklist, "pour pièces", "ne s'allume pas", réplique, copie]
+
+weights:
+  risk: 0.25                   # vols / iCloud bloqués : le risque pèse plus que la moyenne

@@ -1,0 +1,23 @@
+code: velo
+name: Vélos
+keywords: [vélo, vtt, gravel, "vélo de route", vtc, vae, "vélo électrique"]
+
+attributes:
+  bike_type:   { type: choice, required: true, price_relevant: true, choices: [route, vtt, gravel, ville, vtc, enfant, bmx], label: "Type" }
+  frame_size:  { type: text, price_relevant: true, label: "Taille du cadre" }
+  electric:    { type: bool, price_relevant: true, label: "Électrique" }
+  groupset:    { type: text, label: "Groupe / transmission" }
+  frame_material: { type: choice, choices: [aluminium, carbone, acier, titane], label: "Matériau du cadre" }
+  battery_wh:  { type: int, min: 0, max: 2000, label: "Batterie (Wh)" }
+
+resale_platforms: [leboncoin, ebay]
+typical_shipping_cents: 4000   # envoi d'un vélo : cher, souvent remise en main propre
+packaging_cents: 1000
+repair_reserve_pct: 10         # révision, pneus, freins
+typical_days_to_sell: 21
+storage_volume: large
+counterfeit_risk: low
+risk_keywords: ["sans facture", "numéro de cadre", "cadre fissuré", "batterie hs", "pour pièces"]
+
+weights:
+  effort: 0.15                 # volumineux, transport et stockage plus contraignants

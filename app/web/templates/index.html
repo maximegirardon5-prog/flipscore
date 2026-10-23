@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>FlipScore</h1>
+<p>Squelette de la phase 1 — version {{ status.version }} ({{ status.env }}).</p>
+
+<article>
+  <header><strong>État du système</strong></header>
+  <ul>
+    <li>Configuration :
+      {% if status.config.ok %}✅ {{ status.config.categories|length }} catégories
+        ({{ status.config.categories|join(", ") }}),
+        {{ status.config.platforms|length }} plateformes
+      {% else %}❌ {{ status.config.error }}{% endif %}
+    </li>
+    <li>Base de données : {% if status.database.ok %}✅ connectée{% else %}❌ injoignable{% endif %}</li>
+    <li>Connecteurs installés : {{ status.connectors|join(", ") }}</li>
+  </ul>
+</article>
+<p><small>Le score, la collecte et les alertes arrivent dans les phases suivantes.</small></p>
+{% endblock %}

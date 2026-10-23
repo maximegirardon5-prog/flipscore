@@ -1,0 +1,10 @@
+# Réglages personnels PAR DÉFAUT.
+# Ils seront modifiables depuis l'interface (table `settings`), qui a priorité sur ce fichier.
+
+home_postal_code: null          # à renseigner : ton code postal
+max_distance_km: 30
+fuel_cost_cents_per_km: 25      # ~0,25 €/km aller (essence + usure), aller-retour compté par le moteur
+hourly_rate_cents: 1000         # valeur de ton temps : 10 €/h (sert au critère "effort")
+storage_capacity: medium        # low | medium | high
+tax_rate_pct: 0                 # 0 tant que tu es particulier (voir docs/risques.md)
+default_packaging_cents: 150    # carton, papier bulle…
